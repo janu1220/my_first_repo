@@ -1,0 +1,1606 @@
+4)
+const express=require('express') ;
+const app=express();
+const port =3000;
+app.use(express.json());
+let users =[
+    { id:1,name:'Alice' },
+    {id:2 ,name:'Bob'}
+];
+app.post('/users', (req, res) => {
+    const newUser = { id: users.length + 1, name: req.body.name };
+    users.push(newUser);
+    res.status(201).json(newUser);
+});
+app.get('/users', (req, res) => {
+    res.json(users);
+});
+app.get('/users/:id', (req, res) => {
+    const user = users.find(u => u.id == req.params.id);
+    if (user)
+        res.json(user);
+    else
+        res.status(404).json({ message: 'User not found' });
+});
+app.put('/users/:id', (req, res) => {
+    const user = users.find(u => u.id == req.params.id);
+    if (user) {
+        user.name = req.body.name;
+        res.json(user);
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+});
+app.delete('/users/:id', (req, res) => {
+    users = users.filter(u => u.id != req.params.id);
+    res.json({ message: 'User deleted' });
+});
+app.listen(port, () => {
+    console.log(`REST API running at http://localhost:${port}`);
+});
+
+
+
+
+5) student data
+
+Server.js
+
+const express = require("express");
+
+const fs = require("fs");
+
+//const bodyParser = require("body-parser");
+
+
+const app = express();
+
+const PORT = 3000;
+
+
+app.use(express.json());
+
+
+const filePath = "./data/students.json";
+
+
+// Helper: Read student data
+
+function readData() {
+
+const data = fs.readFileSync(filePath);
+
+return JSON.parse(data);
+
+}
+
+
+// Helper: Write student data
+
+function writeData(data) {
+
+fs.writeFileSync(filePath, JSON.stringify(data,null,2));
+
+}
+
+
+// ✅ GET All Students
+
+app.get("/students", (req, res) => {
+
+const students = readData();
+
+res.json(students);
+
+});
+
+
+// ✅ GET Student by ID
+
+app.get("/students/:id", (req, res) => {
+
+const students = readData();
+
+const student = students.find(s => s.id ===req.params.id);
+
+if (student) res.json(student);
+
+else res.status(404).json({ message: "Student not found" });
+
+});
+
+
+// ✅ POST Add New Student
+
+app.post("/students", (req, res) => {
+
+const students = readData();
+
+const newStudent = {
+
+id: req.body.id,
+
+name: req.body.name,
+
+course:req.body.course,
+
+age: req.body.age,
+
+grade: req.body.grade
+
+};
+
+students.push(newStudent);
+
+writeData(students);
+
+res.status(201).json(newStudent);
+
+});
+
+
+// ✅ PUT Update Student
+
+app.put("/students/:id", (req, res) => {
+
+const students = readData();
+
+const index = students.findIndex(s => s.id === parseInt(req.params.id));
+
+if (index !== -1) {
+
+students[index] = { ...students[index], ...req.body };
+
+writeData(students);
+
+res.json(students[index]);
+
+} else {
+
+res.status(404).json({ message: "Student not found" });
+
+}
+
+});
+
+
+// ✅ DELETE Student
+
+app.delete("/students/:id", (req, res) => {
+
+let students = readData();
+
+const initialLength = students.length;
+
+students = students.filter(s => s.id !== parseInt(req.params.id));
+
+if (students.length < initialLength) {
+
+writeData(students);
+
+res.json({ message: "Student deleted successfully" });
+
+} else {
+
+res.status(404).json({ message: "Student not found" });
+
+}
+
+});
+
+
+app.listen(PORT, () => {
+
+console.log(`Server running at http://localhost:${PORT}`);
+
+});
+
+
+Create folder
+
+Under the folder create the below file
+
+Students.json file
+
+[]
+
+8)import React from 'react';
+
+function App() {
+  const now = new Date();
+
+  return (
+    <div>
+      <h2>Current Date and Time</h2>
+      <p>{now.toString()}</p>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+6)web token
+
+
+Program6
+
+Develop an express web application that can interact with a service to perform CRUD operations on student data(Use Postman) and create authorized end points using JWT (JSON Web Token).
+
+Studentserverjwt.js
+
+const express = require("express");
+
+const jwt = require("jsonwebtoken");
+
+const fs = require("fs");
+
+const path = require("path");
+
+
+const app = express();
+
+app.use(express.json()); // replaces body-parser
+
+
+const PORT = 3000;
+
+const JWT_SECRET = "yourSecretKey123"; //sign and verify JWT tokens
+
+const filePath = path.join("data", "students.json");
+
+
+// Dummy user
+
+const USER = {
+
+username: "admin",
+
+password: "admin123"
+
+};
+
+
+// Helper: Read data from file
+
+function readData() {
+
+const data = fs.readFileSync(filePath);
+
+return JSON.parse(data);
+
+}
+
+
+// Helper: Write data to file
+
+function writeData(data) {
+
+fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+}
+
+
+// ✅ Login route
+
+app.post("/login", (req, res) => {
+
+const { username, password } = req.body;
+
+
+if (username === USER.username && password === USER.password) {
+
+const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+
+res.json({ token });
+
+} else {
+
+res.status(401).json({ message: "Invalid credentials" });
+
+}
+
+});
+
+
+// ✅ Token middleware
+
+function authenticateToken(req, res, next) {
+
+const authHeader = req.headers["authorization"];
+
+const token = authHeader && authHeader.split(" ")[1];
+
+
+if (!token) return res.status(401).json({ message: "Token required" });
+
+
+jwt.verify(token, JWT_SECRET, (err, user) => {
+
+if (err) return res.status(403).json({ message: "Invalid or expired token" });
+
+req.user = user;
+
+next();
+
+});
+
+}
+
+
+// ✅ CRUD ROUTES
+// CREATE
+
+app.post("/students", authenticateToken, (req, res) => {
+
+const students = readData();
+
+const newStudent = {
+
+id: req.body.id,
+
+name: req.body.name,
+
+course:req.body.course
+
+};
+
+students.push(newStudent);
+
+writeData(students);
+
+res.status(201).json(newStudent);
+
+});
+
+
+// READ ALL
+
+app.get("/students", authenticateToken, (req, res) => {
+
+const students = readData();
+
+res.json(students);
+
+});
+
+
+// READ ONE
+
+app.get("/students/:id", authenticateToken, (req, res) => {
+
+const students = readData();
+
+const student = students.find((s) => s.id === req.params.id);
+
+if (!student) return res.status(404).json({ message: "Student not found" });
+
+res.json(student);
+
+});
+
+
+// UPDATE
+
+app.put("/students/:id", authenticateToken, (req, res) => {
+
+const students = readData();
+
+const student = students.find((s) => s.id === parseInt(req.params.id));
+
+if (!student) return res.status(404).json({ message: "Student not found" });
+
+
+student.name = req.body.name || student.name;
+
+student.age = req.body.age || student.age;
+
+student.course = req.body.course || student.course;
+
+
+writeData(students);
+
+res.json(student);
+
+});
+
+
+// DELETE
+
+app.delete("/students/:id", authenticateToken, (req, res) => {
+
+let students = readData();
+
+const index = students.findIndex((s) => s.id === parseInt(req.params.id));
+
+if (index === -1) return res.status(404).json({ message: "Student not found" });
+
+
+students.splice(index, 1);
+
+writeData(students);
+
+res.status(204).send();
+
+});
+
+
+// ✅ Start Server
+
+app.listen(PORT, () => {
+
+console.log(`Server running at http://localhost:${PORT}`);
+
+});
+
+
+const express = require("express");
+
+const jwt = require("jsonwebtoken");
+
+const fs = require("fs");
+
+const path = require("path");
+
+
+const app = express();
+
+app.use(express.json()); // replaces body-parser
+
+
+const PORT = 3000;
+
+const JWT_SECRET = "yourSecretKey123"; //sign and verify JWT tokens
+
+const filePath = path.join("data", "students.json");
+
+
+// Dummy user
+
+const USER = {
+
+username: "admin",
+
+password: "admin123"
+
+};
+
+
+// Helper: Read data from file
+
+function readData() {
+
+const data = fs.readFileSync(filePath);
+
+return JSON.parse(data);
+}
+
+
+// Helper: Write data to file
+
+function writeData(data) {
+
+fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+}
+
+
+// ✅ Login route
+
+app.post("/login", (req, res) => {
+
+const { username, password } = req.body;
+
+
+if (username === USER.username && password === USER.password) {
+
+const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+
+res.json({ token });
+
+} else {
+
+res.status(401).json({ message: "Invalid credentials" });
+
+}
+
+});
+
+
+// ✅ Token middleware
+
+function authenticateToken(req, res, next) {
+
+const authHeader = req.headers["authorization"];
+
+const token = authHeader && authHeader.split(" ")[1];
+
+
+if (!token) return res.status(401).json({ message: "Token required" });
+
+
+jwt.verify(token, JWT_SECRET, (err, user) => {
+
+if (err) return res.status(403).json({ message: "Invalid or expired token" });
+
+req.user = user;
+
+next();
+
+});
+
+}
+
+
+// ✅ CRUD ROUTES
+
+
+// CREATE
+
+app.post("/students", authenticateToken, (req, res) => {
+
+const students = readData();
+
+const newStudent = {
+
+id: req.body.id,
+
+name: req.body.name,
+
+course:req.body.course
+
+};
+
+students.push(newStudent);
+
+writeData(students);
+
+res.status(201).json(newStudent);
+
+});
+
+
+// READ ALL
+
+app.get("/students", authenticateToken, (req, res) => {
+
+const students = readData();
+
+res.json(students);
+
+});
+
+
+// READ ONE
+
+app.get("/students/:id", authenticateToken, (req, res) => {
+
+const students = readData();
+
+const student = students.find((s) => s.id === req.params.id);
+
+if (!student) return res.status(404).json({ message: "Student not found" });
+
+res.json(student);
+
+});
+
+
+// UPDATE
+
+app.put("/students/:id", authenticateToken, (req, res) => {
+
+const students = readData();
+
+const student = students.find((s) => s.id === parseInt(req.params.id));
+
+if (!student) return res.status(404).json({ message: "Student not found" });
+
+
+student.name = req.body.name || student.name;
+
+student.age = req.body.age || student.age;
+
+student.course = req.body.course || student.course;
+
+
+writeData(students);
+
+res.json(student);
+
+});
+
+
+// DELETE
+
+app.delete("/students/:id", authenticateToken, (req, res) => {
+
+let students = readData();
+
+const index = students.findIndex((s) => s.id === parseInt(req.params.id));
+
+if (index === -1) return res.status(404).json({ message: "Student not found" });
+
+
+students.splice(index, 1);
+
+writeData(students);
+
+res.status(204).send();
+
+});
+
+
+// ✅ Start Server
+
+app.listen(PORT, () => {
+
+console.log(`Server running at http://localhost:${PORT}`);
+
+});
+
+
+
+
+
+
+
+
+
+10)
+import React, { Component } from 'react';
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      currentDate: new Date()
+    };
+  }
+
+  render() {
+    return (
+      <div>
+        <h2>Current Date</h2>
+        <p>{this.state.currentDate.toDateString()}</p>
+      </div>
+    );
+  }
+}
+
+export default App;
+
+
+11)
+
+import React from "react";
+
+class LifeCycleDemo extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+    console.log("Constructor: Component is being created");
+  }
+
+  componentDidMount() {
+    console.log("componentDidMount: Component has mounted");
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log("componentDidUpdate: Component has updated");
+    console.log("Previous State:", prevState.count);
+  }
+
+  componentWillUnmount() {
+    console.log("componentWillUnmount: Component will unmount");
+  }
+
+  incrementCount = () => {
+    this.setState({ count: this.state.count + 1 });
+  };
+
+  render() {
+    console.log("Render: Component is rendering");
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <h2>React Component Life Cycle Demo</h2>
+        <p>Current Count: {this.state.count}</p>
+        <button onClick={this.incrementCount}>Increment</button>
+      </div>
+    );
+  }
+}
+
+export default LifeCycleDemo;
+
+
+
+12)Buttons
+
+
+import React, { useState } from "react";
+import "./App.css";
+
+export default function App() {
+  const [message, setMessage] = useState("");
+
+  // -------- Normal function for first button ------------
+  function showDateTime() {
+    const now = new Date();
+    setMessage(`Current Date and Time: ${now.toString()}`);
+  }
+
+  // -------- Arrow function for second button ------------
+  const showGoodbye = () => {
+    setMessage("Good Bye!");
+  };
+
+  return (
+    <div className="App" style={{ textAlign: "center", marginTop: "50px" }}>
+      <h1>React Button Click Event Demo</h1>
+
+      <button
+        onClick={showDateTime}
+        style={{ margin: "10px", padding: "10px 20px" }}
+      >
+        Show Date & Time
+      </button>
+
+      <button
+        onClick={showGoodbye}
+        style={{ margin: "10px", padding: "10px 20px" }}
+      >
+        Say Goodbye
+      </button>
+
+      <p style={{ marginTop: "30px", fontSize: "20px", fontWeight: "bold" }}>
+        {message}
+      </p>
+    </div>
+  );
+}
+
+
+
+13)  calculator
+
+import React, { useState } from "react";
+import "./App.css";
+
+function App() {
+  const [input, setInput] = useState("");
+
+  // Handle button click (add value to input)
+  const handleClick = (value) => {
+    setInput(input + value);
+  };
+
+  // Clear the input
+  const handleClear = () => {
+    setInput("");
+  };
+
+  // Calculate the result
+  const handleEqual = () => {
+    try {
+      setInput(eval(input).toString());
+    } catch (error) {
+      setInput("Error");
+    }
+  };
+
+  return (
+    <div className="calculator">
+      <h2>React Calculator</h2>
+      <input type="text" value={input} readOnly />
+      <div className="buttons">
+        <button onClick={handleClear}>C</button>
+        <button onClick={() => handleClick("/")}>÷</button>
+        <button onClick={() => handleClick("*")}>×</button>
+        <button onClick={() => handleClick("-")}>−</button>
+
+        <button onClick={() => handleClick("7")}>7</button>
+        <button onClick={() => handleClick("8")}>8</button>
+        <button onClick={() => handleClick("9")}>9</button>
+        <button onClick={() => handleClick("+")}>+</button>
+
+        <button onClick={() => handleClick("4")}>4</button>
+        <button onClick={() => handleClick("5")}>5</button>
+        <button onClick={() => handleClick("6")}>6</button>
+        <button onClick={handleEqual}>=</button>
+
+        <button onClick={() => handleClick("1")}>1</button>
+        <button onClick={() => handleClick("2")}>2</button>
+        <button onClick={() => handleClick("3")}>3</button>
+        <button onClick={() => handleClick("0")}>0</button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+14) registration page
+
+
+import React, { useState } from "react";
+import "./App.css";
+
+function App() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="container">
+      <h2>Registration Form</h2>
+      {!submitted ? (
+        <form onSubmit={handleSubmit} className="form-box">
+          <label>Name:</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Email:</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Password:</label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+
+          <button type="submit">Register</button>
+        </form>
+      ) : (
+        <div className="result">
+          <h3>Registration Successful 🎉</h3>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+
+
+15)react routers
+
+Open Git Bash or Command Prompt and run:
+
+npx create-react-app react-router-demo
+cd react-router-demo
+npm install react-router-dom
+Inside the folder src/, create a new folder named components, and inside it create 4 files:
+Home.js----
+
+import React from "react";
+
+function Home() {
+  return (
+    <div>
+      <h2>Welcome to the Home Page</h2>
+      <p>This is the main page of our React Router demo.</p>
+    </div>
+  );
+}
+
+export default Home;
+
+
+Product.js----
+
+import React from "react";
+
+function Product() {
+  return (
+    <div>
+      <h2>Our Products</h2>
+      <p>Here you can find details about our amazing products!</p>
+    </div>
+  );
+}
+
+export default Product;
+
+
+About.js----
+
+import React from "react";
+
+function About() {
+  return (
+    <div>
+      <h2>About Us</h2>
+      <p>We are a small company learning React Router concepts.</p>
+    </div>
+  );
+}
+
+export default About;
+
+
+Contact.js ----
+import React from "react";
+
+function Contact() {
+  return (
+    <div>
+      <h2>Contact Us</h2>
+      <p>Email: info@reactdemo.com</p>
+      <p>Phone: +91 9876543210</p>
+    </div>
+  );
+}
+
+export default Contact;
+
+
+App.js----
+
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Home from "./components/Home";
+import Product from "./components/Product";
+import About from "./components/About";
+import Contact from "./components/Contact";
+
+function App() {
+  return (
+    <Router>
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <h1>React Router Example</h1>
+
+        {/* Navigation Links */}
+        <nav>
+          <Link to="/" style={{ margin: "10px" }}>Home</Link>
+          <Link to="/product" style={{ margin: "10px" }}>Product</Link>
+          <Link to="/about" style={{ margin: "10px" }}>About</Link>
+          <Link to="/contact" style={{ margin: "10px" }}>Contact</Link>
+        </nav>
+
+        <hr />
+
+        {/* Route Definitions */}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/product" element={<Product />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+
+
+
+
+16)
+
+e-commerce
+
+Step 1 — Create the React App
+
+Open Git Bash or Command Prompt and run:
+
+npx create-react-app bookstore
+cd bookstore
+npm install react-router-dom
+
+🧩 Step 2 — Folder Structure
+
+Inside src/, create a folder called components:
+
+src/
+ ├── components/
+ │    ├── Home.js
+ │    ├── ProductPage.js
+ │    ├── Cart.js
+ │    ├── Checkout.js
+ ├── App.js
+ ├── index.js
+
+🏠 Step 3 — Home.js (Storefront with Book List)
+import React from "react";
+import { Link } from "react-router-dom";
+
+const books = [
+  { id: 1, title: "The Great Gatsby", price: 299 },
+  { id: 2, title: "To Kill a Mockingbird", price: 249 },
+  { id: 3, title: "1984", price: 199 },
+  { id: 4, title: "Pride and Prejudice", price: 179 },
+];
+
+function Home({ addToCart }) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <h1>📚 Book Store</h1>
+      <h3>Available Books</h3>
+      {books.map((book) => (
+        <div key={book.id} style={{ margin: "10px" }}>
+          <Link to={`/product/${book.id}`}>{book.title}</Link> - ₹{book.price}
+          <button onClick={() => addToCart(book)} style={{ marginLeft: "10px" }}>
+            Add to Cart
+          </button>
+        </div>
+      ))}
+      <hr />
+      <Link to="/cart">🛒 Go to Cart</Link>
+    </div>
+  );
+}
+
+export default Home;
+
+📖 Step 4 — ProductPage.js (Single Product Details)
+import React from "react";
+import { useParams, Link } from "react-router-dom";
+
+const books = [
+  { id: 1, title: "The Great Gatsby", price: 299 },
+  { id: 2, title: "To Kill a Mockingbird", price: 249 },
+  { id: 3, title: "1984", price: 199 },
+  { id: 4, title: "Pride and Prejudice", price: 179 },
+];
+
+function ProductPage({ addToCart }) {
+  const { id } = useParams();
+  const book = books.find((b) => b.id === parseInt(id));
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <h2>{book.title}</h2>
+      <p>Price: ₹{book.price}</p>
+      <button onClick={() => addToCart(book)}>Add to Cart</button>
+      <br /><br />
+      <Link to="/">⬅ Back to Home</Link>
+    </div>
+  );
+}
+
+export default ProductPage;
+
+🛒 Step 5 — Cart.js (View Cart Items)
+import React from "react";
+import { Link } from "react-router-dom";
+
+function Cart({ cart }) {
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <h1>🛍️ Your Cart</h1>
+      {cart.length === 0 ? (
+        <p>Your cart is empty!</p>
+      ) : (
+        <>
+          <ul style={{ listStyle: "none" }}>
+            {cart.map((item) => (
+              <li key={item.id}>
+                {item.title} - ₹{item.price} × {item.quantity}
+              </li>
+            ))}
+          </ul>
+          <h3>Total: ₹{total}</h3>
+          <Link to="/checkout">
+            <button>Proceed to Checkout</button>
+          </Link>
+        </>
+      )}
+      <br />
+      <Link to="/">⬅ Continue Shopping</Link>
+    </div>
+  );
+}
+
+export default Cart;
+
+🧾 Step 6 — Checkout.js (Invoice Page)
+import React from "react";
+import { Link } from "react-router-dom";
+
+function Checkout({ cart }) {
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <h1>🧾 Invoice</h1>
+      <table border="1" style={{ margin: "auto", width: "50%" }}>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cart.map((item) => (
+            <tr key={item.id}>
+              <td>{item.title}</td>
+              <td>{item.quantity}</td>
+              <td>₹{item.price}</td>
+              <td>₹{item.price * item.quantity}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h3>Grand Total: ₹{total}</h3>
+      <button onClick={() => window.print()}>🖨️ Print Invoice</button>
+      <br /><br />
+      <Link to="/">⬅ Back to Store</Link>
+    </div>
+  );
+}
+
+export default Checkout;
+
+⚙️ Step 7 — App.js (Router Setup and Cart State)
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./components/Home";
+import ProductPage from "./components/ProductPage";
+import Cart from "./components/Cart";
+import Checkout from "./components/Checkout";
+
+function App() {
+  const [cart, setCart] = useState([]);
+
+  const addToCart = (book) => {
+    setCart((prevCart) => {
+      const existing = prevCart.find((item) => item.id === book.id);
+      if (existing) {
+        return prevCart.map((item) =>
+          item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        return [...prevCart, { ...book, quantity: 1 }];
+      }
+    });
+  };
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home addToCart={addToCart} />} />
+        <Route path="/product/:id" element={<ProductPage addToCart={addToCart} />} />
+        <Route path="/cart" element={<Cart cart={cart} />} />
+        <Route path="/checkout" element={<Checkout cart={cart} />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+🚀 Step 8 — Run the Application
+npm start
+
+
+17)---------------------------------------------------------------------
+
+
+Open Git Bash / CMD and run:
+
+npx create-react-app weather-dashboard
+cd weather-dashboard
+npm install axios chart.js react-chartjs-2
+
+☁️ Step 2 — Get OpenWeatherMap API Key
+
+Go to https://openweathermap.org/api
+
+Create a free account
+
+Copy your API key
+
+📁 Step 3 — Folder Structure
+src/
+ ├── components/
+ │    ├── WeatherDashboard.js
+ │    ├── WeatherChart.js
+ ├── App.js
+ ├── index.js
+
+🌤️ Step 4 — WeatherDashboard.js
+
+This component fetches current weather and simulated historical data.
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import WeatherChart from "./WeatherChart";
+
+function WeatherDashboard() {
+  const [city, setCity] = useState("Hyderabad");
+  const [weather, setWeather] = useState(null);
+  const [history, setHistory] = useState([]);
+
+  const API_KEY = "YOUR_API_KEY_HERE"; // 🔑 Replace with your OpenWeatherMap API key
+
+  const fetchWeather = async () => {
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
+      );
+      setWeather(response.data);
+
+      // Simulate historical data (past 7 days)
+      const simulated = Array.from({ length: 7 }, (_, i) => ({
+        day: `Day ${i + 1}`,
+        temp: (Math.random() * 10 + 20).toFixed(1),
+      }));
+      setHistory(simulated);
+    } catch (err) {
+      alert("City not found! Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+  return (
+    <div style={{ textAlign: "center", padding: "30px" }}>
+      <h1>🌦️ Weather Dashboard</h1>
+
+      {/* City Input */}
+      <input
+        type="text"
+        value={city}
+        onChange={(e) => setCity(e.target.value)}
+        placeholder="Enter city name"
+        style={{ padding: "8px", width: "200px", marginRight: "10px" }}
+      />
+      <button onClick={fetchWeather} style={{ padding: "8px" }}>
+        Get Weather
+      </button>
+
+      {/* Display Current Weather */}
+      {weather && (
+        <div style={{ marginTop: "30px" }}>
+          <h2>{weather.name}</h2>
+          <p>🌡️ Temperature: {weather.main.temp}°C</p>
+          <p>💧 Humidity: {weather.main.humidity}%</p>
+          <p>🌬️ Wind Speed: {weather.wind.speed} m/s</p>
+        </div>
+      )}
+
+      {/* Display Historical Chart */}
+      <div style={{ marginTop: "50px" }}>
+        <WeatherChart history={history} />
+      </div>
+    </div>
+  );
+}
+
+export default WeatherDashboard;
+
+📊 Step 5 — WeatherChart.js
+
+This component renders the Chart.js graph using historical data.
+
+import React from "react";
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from "chart.js";
+
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend);
+
+function WeatherChart({ history }) {
+  const data = {
+    labels: history.map((h) => h.day),
+    datasets: [
+      {
+        label: "Temperature (°C)",
+        data: history.map((h) => h.temp),
+        borderColor: "rgb(75, 192, 192)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: { display: true, text: "7-Day Temperature Trend" },
+    },
+  };
+
+  return (
+    <div style={{ width: "600px", margin: "auto" }}>
+      <Line data={data} options={options} />
+    </div>
+  );
+}
+
+export default WeatherChart;
+
+🧠 Step 6 — App.js
+import React from "react";
+import WeatherDashboard from "./components/WeatherDashboard";
+
+function App() {
+  return (
+    <div>
+      <WeatherDashboard />
+    </div>
+  );
+}
+
+export default App;
+
+🚀 Step 7 — Run the Application
+npm start
+
+
+Then open your browser at:
+👉 http://localhost:3000
+
+🌡️ Output Preview
+
+You’ll see an input to type a city name
+
+Displays current temperature, humidity, wind speed
+
+Below that, a line chart (7-day trend)
+
+📦 Step 8 — (Optional) Deploy to GitHub Pages
+
+If you want to deploy this app (like the TODO one):
+
+npm install gh-pages --save-dev
+
+
+Then edit your package.json:
+
+{
+  "homepage": "https://yourusername.github.io/weather-dashboard",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  }
+}
+
+
+Run:
+
+git init
+git add .
+git commit -m "Weather dashboard"
+git remote add origin https://github.com/yourusername/weather-dashboard.git
+git branch -M main
+git push -u origin main
+npm run deploy
+
+
+Your app will be live at:
+👉 https://yourusername.github.io/weather-dashboard
+
+
+18) TODO ---------------------------------------------------------------------
+
+
+Open Git Bash or Command Prompt and run:
+
+npx create-react-app todo-app
+cd todo-app
+
+🧩 STEP 2 — Install GitHub Pages (for deployment)
+npm install gh-pages --save-dev
+
+🧩 STEP 3 — Project Structure
+
+Inside src/, create a folder named components and three files:
+
+src/
+ ├── components/
+ │    ├── TodoInput.js
+ │    ├── TodoList.js
+ │    ├── TodoItem.js
+ ├── App.js
+ ├── index.js
+
+📝 STEP 4 — TodoInput.js
+import React, { useState } from "react";
+
+function TodoInput({ addTodo }) {
+  const [task, setTask] = useState("");
+
+  const handleAdd = () => {
+    if (task.trim() === "") return;
+    addTodo(task);
+    setTask("");
+  };
+
+  return (
+    <div style={{ marginBottom: "20px" }}>
+      <input
+        type="text"
+        placeholder="Enter a task..."
+        value={task}
+        onChange={(e) => setTask(e.target.value)}
+        style={{ padding: "8px", width: "250px" }}
+      />
+      <button onClick={handleAdd} style={{ marginLeft: "10px", padding: "8px" }}>
+        Add
+      </button>
+    </div>
+  );
+}
+
+export default TodoInput;
+
+📋 STEP 5 — TodoItem.js
+import React from "react";
+
+function TodoItem({ todo, index, deleteTodo }) {
+  return (
+    <div style={{ margin: "10px" }}>
+      {index + 1}. {todo}
+      <button
+        onClick={() => deleteTodo(index)}
+        style={{ marginLeft: "15px", color: "white", backgroundColor: "red", border: "none", padding: "5px 10px" }}
+      >
+        Delete
+      </button>
+    </div>
+  );
+}
+
+export default TodoItem;
+
+📜 STEP 6 — TodoList.js
+import React from "react";
+import TodoItem from "./TodoItem";
+
+function TodoList({ todos, deleteTodo }) {
+  return (
+    <div>
+      {todos.length === 0 ? (
+        <p>No tasks added yet!</p>
+      ) : (
+        todos.map((todo, index) => (
+          <TodoItem key={index} todo={todo} index={index} deleteTodo={deleteTodo} />
+        ))
+      )}
+    </div>
+  );
+}
+
+export default TodoList;
+
+⚙️ STEP 7 — App.js
+import React, { useState } from "react";
+import TodoInput from "./components/TodoInput";
+import TodoList from "./components/TodoList";
+
+function App() {
+  const [todos, setTodos] = useState([]);
+
+  const addTodo = (task) => {
+    setTodos([...todos, task]);
+  };
+
+  const deleteTodo = (index) => {
+    setTodos(todos.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
+      <h1>📝 React TODO App</h1>
+      <TodoInput addTodo={addTodo} />
+      <TodoList todos={todos} deleteTodo={deleteTodo} />
+    </div>
+  );
+}
+
+export default App;
+
+ STEP 8 — Run the Application Locally
+npm start
+
+
+Then open your browser at
+ http://localhost:3000
+
+ STEP 9 — Prepare for GitHub Deployment
+(1) Initialize Git
+git init
+git add .
+git commit -m "Initial commit"
+
+(2) Create a new repository on GitHub
+
+Name it todo-app (or any name you prefer).
+
+Copy the repository URL (example):
+
+https://github.com/yourusername/todo-app.git
+
+(3) Connect your local repo to GitHub
+git remote add origin https://github.com/yourusername/todo-app.git
+git branch -M main
+git push -u origin main
+
+(4) Add GitHub Pages Config to package.json
+
+Open package.json and add these lines:
+
+{
+  "homepage": "https://yourusername.github.io/todo-app",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  }
+}
+
+
+(Replace yourusername with your GitHub username.)
+
+(5) Deploy to GitHub Pages
+npm run deploy
+
+
+This will:
+
+Build your app
+
+Upload the build/ folder to a new gh-pages branch
+
+Host your app at
+ https://yourusername.github.io/todo-app
+
+ STEP 10 — Verify Deployment
+
+Go to your GitHub repo → Settings → Pages
+Make sure it says:
+
+Your site is live at https://yourusername.github.io/todo-app
+
+ RESULT
+
+You’ll have a working React TODO App live on GitHub Pages, where you can:
+
+Add tasks 
+
+Delete tasks 
+
+View them dynamically without reloading
