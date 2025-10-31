@@ -1,0 +1,128 @@
+4)
+const express=require('express') ;
+const app=express();
+const port =3000;
+app.use(express.json());
+let users =[
+    { id:1,name:'Alice' },
+    {id:2 ,name:'Bob'}
+];
+app.post('/users', (req, res) => {
+    const newUser = { id: users.length + 1, name: req.body.name };
+    users.push(newUser);
+    res.status(201).json(newUser);
+});
+app.get('/users', (req, res) => {
+    res.json(users);
+});
+app.get('/users/:id', (req, res) => {
+    const user = users.find(u => u.id == req.params.id);
+    if (user)
+        res.json(user);
+    else
+        res.status(404).json({ message: 'User not found' });
+});
+app.put('/users/:id', (req, res) => {
+    const user = users.find(u => u.id == req.params.id);
+    if (user) {
+        user.name = req.body.name;
+        res.json(user);
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+});
+app.delete('/users/:id', (req, res) => {
+    users = users.filter(u => u.id != req.params.id);
+    res.json({ message: 'User deleted' });
+});
+app.listen(port, () => {
+    console.log(`REST API running at http://localhost:${port}`);
+});
+
+
+
+
+8)import React from 'react';
+
+function App() {
+  const now = new Date();
+
+  return (
+    <div>
+      <h2>Current Date and Time</h2>
+      <p>{now.toString()}</p>
+    </div>
+  );
+}
+
+export default App;
+
+
+10)
+import React, { Component } from 'react';
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      currentDate: new Date()
+    };
+  }
+
+  render() {
+    return (
+      <div>
+        <h2>Current Date</h2>
+        <p>{this.state.currentDate.toDateString()}</p>
+      </div>
+    );
+  }
+}
+
+export default App;
+
+
+11)
+
+import React from "react";
+
+class LifeCycleDemo extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      count: 0
+    };
+    console.log("Constructor: Component is being created");
+  }
+
+  componentDidMount() {
+    console.log("componentDidMount: Component has mounted");
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log("componentDidUpdate: Component has updated");
+    console.log("Previous State:", prevState.count);
+  }
+
+  componentWillUnmount() {
+    console.log("componentWillUnmount: Component will unmount");
+  }
+
+  incrementCount = () => {
+    this.setState({ count: this.state.count + 1 });
+  };
+
+  render() {
+    console.log("Render: Component is rendering");
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <h2>React Component Life Cycle Demo</h2>
+        <p>Current Count: {this.state.count}</p>
+        <button onClick={this.incrementCount}>Increment</button>
+      </div>
+    );
+  }
+}
+
+export default LifeCycleDemo;
+
